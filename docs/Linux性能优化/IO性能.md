@@ -84,3 +84,48 @@ IO调度算法
 - 响应时间，是指 I/O 请求从发出到收到响应的间隔时间。
 
 ![iostat](https://static001.geekbang.org/resource/image/cf/8d/cff31e715af51c9cb8085ce1bb48318d.png)
+
+## IO性能优化
+
+### 应用程序优化
+
+- 可以用追加写代替随机写，减少寻址开销，加快 I/O 写的速度。
+
+- 可以借助缓存 I/O ，充分利用系统缓存，降低实际 I/O 的次数。
+
+- 可以在应用程序内部构建自己的缓存，或者用 Redis 这类外部缓存系统。
+  
+- 在需要频繁读写同一块磁盘空间时，可以用 mmap 代替 read/write，减少内存的拷贝次数。
+
+- 在需要同步写的场景中，尽量将写请求合并，而不是让每个请求都同步写入磁盘，即可以用 fsync() 取代 O_SYNC。
+
+- 在多个应用程序共享相同磁盘时，为了保证 I/O 不被某个应用完全占用，推荐你使用 cgroups 的 I/O 子系统，来限制进程 / 进程组的 IOPS 以及吞吐量。
+
+### 文件系统优化
+
+- 可以根据实际负载场景的不同，选择最适合的文件系统。比如 Ubuntu 默认使用 ext4 文件系统，而 CentOS 7 默认使用 xfs 文件系统。
+
+- 可以进一步优化文件系统的配置选项，包括文件系统的特性（如 ext_attr、dir_index）、日志模式（如 journal、ordered、writeback）、挂载选项（如 noatime）等等。
+
+- 可以优化文件系统的缓存。
+
+### 磁盘优化
+
+- 最简单有效的优化方法，就是换用性能更好的磁盘，比如用 SSD 替代 HDD。
+  
+- 我们可以使用 RAID ，把多块磁盘组合成一个逻辑磁盘，构成冗余独立磁盘阵列。这样做既可以提高数据的可靠性，又可以提升数据的访问性能。
+  
+- 针对磁盘和应用程序 I/O 模式的特征，我们可以选择最适合的 I/O 调度算法。比方说，SSD 和虚拟机中的磁盘，通常用的是 noop 调度算法。而数据库应用，我更推荐使用 deadline 算法。
+  
+- 我们可以对应用程序的数据，进行磁盘级别的隔离。比如，我们可以为日志、数据库等 I/O 压力比较重的应用，配置单独的磁盘。
+  
+- 在顺序读比较多的场景中，我们可以增大磁盘的预读数据，比如，你可以通过下面两种方法，调整 /dev/sdb 的预读大小。
+    * 调整内核选项 /sys/block/sdb/queue/read_ahead_kb，默认大小是 128 KB，单位为 KB。
+    * 使用 blockdev 工具设置，比如 blockdev --setra 8192 /dev/sdb，注意这里的单位是 512B（0.5KB），所以它的数值总是 read_ahead_kb 的两倍。
+
+- 可以优化内核块设备 I/O 的选项。比如，可以调整磁盘队列的长度 /sys/block/sdb/queue/nr_requests，适当增大队列长度，可以提升磁盘的吞吐量（当然也会导致 I/O 延迟增大）。
+
+
+![工具](https://static001.geekbang.org/resource/image/6f/98/6f26fa18a73458764fcda00212006698.png)
+![工具](https://static001.geekbang.org/resource/image/ee/f3/ee11664d015f034e4042b9fa4fyycff3.jpg)
+![工具](https://static001.geekbang.org/resource/image/18/8a/1802a35475ee2755fb45aec55ed2d98a.png)
