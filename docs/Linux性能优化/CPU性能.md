@@ -63,6 +63,10 @@ Linux将中断分为两部分：
 
 ## 常用工具
 
+### mpstat
+
+
+
 ![指标找工具](https://static001.geekbang.org/resource/image/59/ec/596397e1d6335d2990f70427ad4b14ec.png)
 
 ![工具找指标](https://static001.geekbang.org/resource/image/b0/ca/b0c67a7196f5ca4cc58f14f959a364ca.png)
